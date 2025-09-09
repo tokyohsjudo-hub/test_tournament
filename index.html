@@ -5,218 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大会本部ダッシュボード</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
-<body class="bg-gray-100 p-4">
-
-    <!-- 大会管理画面 (初期表示) -->
-    <div id="tournamentManagementScreen" class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
-        <h1 class="text-3xl font-bold text-center text-gray-800">大会管理システム</h1>
+<body class="bg-gray-100 p-6">
+    <div id="dashboard" class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
+        <h1 class="text-3xl font-bold text-gray-800 text-center">大会本部ダッシュボード</h1>
         <div id="userIdDisplay" class="text-sm text-gray-500 text-center"></div>
-        
+        <p id="message" class="text-center font-medium p-2 rounded-lg hidden"></p>
+
         <hr class="my-4">
-        
-        <!-- 新しい大会の登録 -->
-        <div class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
+
+        <!-- 新しい大会を登録 -->
+        <div class="space-y-4 p-4 bg-blue-50 rounded-lg shadow-inner">
             <h2 class="text-xl font-semibold text-gray-700">新しい大会の登録</h2>
-            <div class="flex flex-col space-y-2">
-                <label for="newTournamentNameInput" class="block text-sm font-medium text-gray-700">新しい大会名:</label>
-                <input type="text" id="newTournamentNameInput" placeholder="例: 〇〇高校柔道大会" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                <button id="addTournamentBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    大会を登録
+            <form id="newTournamentForm" class="space-y-4">
+                <div>
+                    <label for="tournamentNameInput" class="block text-sm font-medium text-gray-700">大会名:</label>
+                    <input type="text" id="tournamentNameInput" placeholder="例: 全国高校柔道大会" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    登録
                 </button>
-            </div>
-            <p id="managementMessage" class="text-sm font-medium text-center hidden"></p>
+            </form>
         </div>
 
         <hr class="my-4">
 
-        <!-- 既存大会の選択 -->
+        <!-- 既存の大会を開く -->
         <div class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
-            <h2 class="text-xl font-semibold text-gray-700">大会の選択</h2>
+            <h2 class="text-xl font-semibold text-gray-700">既存の大会を開く</h2>
             <div class="flex flex-col space-y-2">
-                <label for="tournamentSelect" class="block text-sm font-medium text-gray-700">編集する大会を選択してください:</label>
+                <label for="tournamentSelect" class="block text-sm font-medium text-gray-700">大会を選択してください:</label>
                 <select id="tournamentSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
                     <option value="">大会を選択</option>
                 </select>
-                <button id="selectTournamentBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    選択した大会を開く
-                </button>
             </div>
-            <button id="showAllTournamentsBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                過去の大会リストを表示
+            <button id="openTournamentButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                選択した大会を開く
             </button>
         </div>
 
-        <!-- 試合記録入力システムへのリンクを追加 -->
-        <div class="space-y-2 p-4 bg-blue-50 rounded-lg shadow-inner text-center">
-             <a href="match_record.html" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                試合記録入力システムを開く
-            </a>
-        </div>
-        
-        <!-- 過去の大会リストと削除機能 (初期は非表示) -->
-        <div id="deletionSection" class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner hidden">
-            <h2 class="text-xl font-semibold text-gray-700">過去の大会データの削除</h2>
-            <p class="text-sm text-gray-500">削除したい大会にチェックを入れてください。</p>
-            <div id="tournamentListForDeletion" class="space-y-2">
-                <p class="text-sm text-gray-500 text-center">大会を読み込み中...</p>
-            </div>
-            <button id="deleteSelectedTournamentsBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                チェックした大会を削除
-            </button>
-        </div>
-    </div>
-    
-    <!-- メインダッシュボード画面 -->
-    <div id="mainDashboardScreen" class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6 hidden">
-        <div class="flex items-center justify-between">
-            <h1 id="dashboardTitle" class="text-3xl font-bold text-gray-800">大会本部ダッシュボード</h1>
-            <button id="backToManagementBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                大会選択に戻る
-            </button>
-        </div>
-        <p id="dashboardMessage" class="text-sm font-medium text-center hidden"></p>
-
-        <hr class="my-4">
-        
-        <!-- 選手データ登録セクション -->
+        <!-- 過去の大会リスト -->
         <div class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
-            <h2 class="text-xl font-semibold text-gray-700">選手データ登録</h2>
+            <h2 class="text-xl font-semibold text-gray-700">過去の大会管理</h2>
             <div class="flex flex-col space-y-2">
-                <label for="csvFileInput" class="block text-sm font-medium text-gray-700">選手CSVファイルを選択:</label>
-                <p class="text-xs text-gray-500">CSV形式: 選手名,所属,階級 (例: ヤマダタロウ,〇〇高校,73kg級)</p>
-                <input type="file" id="csvFileInput" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
-                <button id="uploadCsvBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    選手データを登録
+                <button id="showTournamentsButton" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    全ての大会リストを表示/非表示
+                </button>
+            </div>
+            <div id="tournamentListSection" class="mt-4 space-y-4 hidden">
+                <div class="space-y-2" id="tournamentsContainer"></div>
+                <button id="deleteTournamentsButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    選択した大会を削除
                 </button>
             </div>
         </div>
         
-        <hr class="my-4">
-
-        <!-- 試合記録検索・抽出セクション -->
-        <div class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
-            <h2 class="text-xl font-semibold text-gray-700">試合記録検索・抽出</h2>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <label for="venueFilter" class="block text-sm font-medium text-gray-700">試合会場:</label>
-                    <select id="venueFilter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                        <option value="">すべて</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="rankFilter" class="block text-sm font-medium text-gray-700">階級:</label>
-                    <select id="rankFilter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                        <option value="">すべて</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="playerFilter" class="block text-sm font-medium text-gray-700">選手名:</label>
-                    <input type="text" id="playerFilter" placeholder="選手名を入力" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div>
-                    <label for="schoolFilter" class="block text-sm font-medium text-gray-700">所属（学校名）:</label>
-                    <input type="text" id="schoolFilter" placeholder="所属を入力" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div class="flex items-end justify-start">
-                    <label class="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                        <input type="checkbox" id="semifinalFilter" class="rounded text-indigo-600 border-gray-300 shadow-sm focus:ring-indigo-500">
-                        <span>準決勝以上</span>
-                    </label>
-                </div>
-            </div>
-            <div class="flex space-x-2 mt-4">
-                <button id="searchBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    検索
-                </button>
-                <button id="exportPdfBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                    PDF出力
-                </button>
-            </div>
-        </div>
-
-        <hr class="my-4">
-
-        <!-- 試合記録一覧セクション -->
-        <div class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">試合記録一覧（リアルタイム）</h2>
-            <div id="matchRecordsList" class="space-y-4">
-                <p class="text-center text-gray-500">試合記録を読み込み中...</p>
-            </div>
-        </div>
     </div>
 
-    <!-- 試合記録編集モーダル -->
-    <div id="editModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg font-bold mb-4">試合記録の編集</h3>
-            <form id="editForm" class="space-y-4">
-                <input type="hidden" id="editMatchId">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">試合会場:</label>
-                    <input type="text" id="editVenue" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" disabled>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">試合番号:</label>
-                    <input type="number" id="editMatchNumber" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">回戦:</label>
-                    <input type="text" id="editRound" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">階級:</label>
-                    <input type="text" id="editRank" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div class="p-2 bg-red-50 rounded-lg">
-                    <label class="block text-sm font-medium text-gray-700">選手（赤）:</label>
-                    <input type="text" id="editPlayer1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                    <label class="block text-sm font-medium text-gray-700">所属:</label>
-                    <input type="text" id="editSchool1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                    <label class="block text-sm font-medium text-gray-700">勝敗:</label>
-                    <input type="text" id="editOutcome1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                    <label class="block text-sm font-medium text-gray-700">決まり技:</label>
-                    <input type="text" id="editTechnique1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div class="p-2 bg-white rounded-lg">
-                    <label class="block text-sm font-medium text-gray-700">選手（白）:</label>
-                    <input type="text" id="editPlayer2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                    <label class="block text-sm font-medium text-gray-700">所属:</label>
-                    <input type="text" id="editSchool2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                    <label class="block text-sm font-medium text-gray-700">勝敗:</label>
-                    <input type="text" id="editOutcome2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                    <label class="block text-sm font-medium text-gray-700">決まり技:</label>
-                    <input type="text" id="editTechnique2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">試合時間:</label>
-                    <input type="text" id="editMatchTime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
-                </div>
-                <div class="flex justify-between space-x-2">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                        保存
-                    </button>
-                    <button type="button" id="closeModalBtn" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
-                        キャンセル
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- カスタム確認ダイアログ -->
-    <div id="confirmModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-80 shadow-lg rounded-md bg-white text-center">
-            <h3 class="text-lg font-bold mb-4">確認</h3>
-            <p id="confirmMessage" class="text-gray-700 mb-6">本当にこの記録を削除しますか？</p>
-            <div class="flex justify-between space-x-2">
-                <button id="confirmYesBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">はい</button>
-                <button id="confirmNoBtn" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition duration-300">いいえ</button>
+    <!-- 削除確認モーダル -->
+    <div id="deleteModal" class="modal">
+        <div class="bg-white rounded-lg p-6 shadow-xl w-96 text-center">
+            <h3 class="text-lg font-bold text-gray-800">削除の確認</h3>
+            <p class="text-sm text-gray-600 mt-2">本当に選択した大会を削除してもよろしいですか？</p>
+            <div class="mt-6 flex justify-center space-x-4">
+                <button id="cancelDeleteButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">キャンセル</button>
+                <button id="confirmDeleteButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">削除</button>
             </div>
         </div>
     </div>
@@ -225,7 +95,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, serverTimestamp, onSnapshot, writeBatch, updateDoc, deleteDoc, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, getDoc, serverTimestamp, onSnapshot, query, where, getDocs, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         setLogLevel('debug');
@@ -238,46 +108,22 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        const tournamentManagementScreen = document.getElementById('tournamentManagementScreen');
-        const mainDashboardScreen = document.getElementById('mainDashboardScreen');
-        const dashboardTitle = document.getElementById('dashboardTitle');
-        const backToManagementBtn = document.getElementById('backToManagementBtn');
-
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const newTournamentNameInput = document.getElementById('newTournamentNameInput');
-        const addTournamentBtn = document.getElementById('addTournamentBtn');
+        const newTournamentForm = document.getElementById('newTournamentForm');
+        const tournamentNameInput = document.getElementById('tournamentNameInput');
         const tournamentSelect = document.getElementById('tournamentSelect');
-        const selectTournamentBtn = document.getElementById('selectTournamentBtn');
-        const showAllTournamentsBtn = document.getElementById('showAllTournamentsBtn');
-        const managementMessageDiv = document.getElementById('managementMessage');
-        const dashboardMessageDiv = document.getElementById('dashboardMessage');
+        const openTournamentButton = document.getElementById('openTournamentButton');
+        const showTournamentsButton = document.getElementById('showTournamentsButton');
+        const tournamentListSection = document.getElementById('tournamentListSection');
+        const tournamentsContainer = document.getElementById('tournamentsContainer');
+        const deleteTournamentsButton = document.getElementById('deleteTournamentsButton');
+        const messageDiv = document.getElementById('message');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const deleteModal = document.getElementById('deleteModal');
+        const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+        const cancelDeleteButton = document.getElementById('cancelDeleteButton');
 
-        const csvFileInput = document.getElementById('csvFileInput');
-        const uploadCsvBtn = document.getElementById('uploadCsvBtn');
-        const matchRecordsList = document.getElementById('matchRecordsList');
-
-        const venueFilter = document.getElementById('venueFilter');
-        const rankFilter = document.getElementById('rankFilter');
-        const playerFilter = document.getElementById('playerFilter');
-        const schoolFilter = document.getElementById('schoolFilter');
-        const semifinalFilter = document.getElementById('semifinalFilter');
-        const searchBtn = document.getElementById('searchBtn');
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
-        const deletionSection = document.getElementById('deletionSection');
-        const tournamentListForDeletion = document.getElementById('tournamentListForDeletion');
-        const deleteSelectedTournamentsBtn = document.getElementById('deleteSelectedTournamentsBtn');
-
-        const editModal = document.getElementById('editModal');
-        const editForm = document.getElementById('editForm');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const confirmModal = document.getElementById('confirmModal');
-        const confirmYesBtn = document.getElementById('confirmYesBtn');
-        const confirmNoBtn = document.getElementById('confirmNoBtn');
-        
         let userId = null;
-        let allMatchRecords = [];
-        let currentTournamentId = null;
-
+        
         /**
          * Utility function to display a temporary message.
          * @param {string} message - The message to display.
@@ -293,41 +139,12 @@
             }, 3000);
         }
 
-        /**
-         * A custom confirmation modal function that returns a Promise.
-         * @param {string} message - The confirmation message to display.
-         * @returns {Promise<boolean>} A promise that resolves to true if 'Yes' is clicked, false otherwise.
-         */
-        function showConfirmModal(message) {
-            return new Promise(resolve => {
-                document.getElementById('confirmMessage').textContent = message;
-                confirmModal.classList.remove('hidden');
-
-                const onYes = () => {
-                    confirmModal.classList.add('hidden');
-                    confirmYesBtn.removeEventListener('click', onYes);
-                    confirmNoBtn.removeEventListener('click', onNo);
-                    resolve(true);
-                };
-
-                const onNo = () => {
-                    confirmModal.classList.add('hidden');
-                    confirmYesBtn.removeEventListener('click', onYes);
-                    confirmNoBtn.removeEventListener('click', onNo);
-                    resolve(false);
-                };
-
-                confirmYesBtn.addEventListener('click', onYes);
-                confirmNoBtn.addEventListener('click', onNo);
-            });
-        }
-
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 userId = user.uid;
                 userIdDisplay.textContent = `ユーザーID: ${userId}`;
                 console.log("Firebaseに認証されました。ユーザーID:", userId);
-                setupTournamentManagementListener();
+                setupTournamentListeners();
             } else {
                 console.log("Firebase認証中...");
                 try {
@@ -342,444 +159,112 @@
             }
         });
 
-        // === 大会管理機能 ===
-
-        function setupTournamentManagementListener() {
+        function setupTournamentListeners() {
             if (!userId) {
                 console.log("ユーザーIDがまだありません。リトライします。");
-                setTimeout(setupTournamentManagementListener, 1000);
+                setTimeout(setupTournamentListeners, 1000);
                 return;
             }
-
             const tournamentsRef = collection(db, `artifacts/${appId}/public/data/tournaments`);
             onSnapshot(tournamentsRef, (snapshot) => {
-                tournamentSelect.innerHTML = '<option value="">大会を選択</option>';
-                tournamentListForDeletion.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = data.name;
-                    tournamentSelect.appendChild(option);
-
-                    const div = document.createElement('div');
-                    div.className = "flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition duration-150 cursor-pointer";
-                    div.innerHTML = `
-                        <input type="checkbox" data-id="${doc.id}" id="delete-${doc.id}" class="delete-checkbox rounded text-red-600 border-gray-300 shadow-sm focus:ring-red-500">
-                        <label for="delete-${doc.id}" class="flex-1 text-gray-700">${data.name}</label>
-                        <a href="#" class="view-link text-blue-500 hover:underline" data-id="${doc.id}" data-name="${data.name}">記録を見る</a>
-                    `;
-                    tournamentListForDeletion.appendChild(div);
-                });
-
-                document.querySelectorAll('.view-link').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const tournamentId = e.target.dataset.id;
-                        const tournamentName = e.target.dataset.name;
-                        openMainDashboard(tournamentId, tournamentName);
-                    });
-                });
+                const tournamentOptions = snapshot.docs.map(doc => `<option value="${doc.id}">${doc.data().name}</option>`).join('');
+                tournamentSelect.innerHTML = `<option value="">大会を選択</option>${tournamentOptions}`;
+                renderTournamentList(snapshot.docs);
             }, (error) => {
                 console.error("大会一覧のリアルタイム更新エラー:", error);
-                showMessage('大会一覧の取得中にエラーが発生しました。', 'red', managementMessageDiv);
+                showMessage('大会一覧の取得中にエラーが発生しました。', 'red', messageDiv);
+            });
+        }
+        
+        function renderTournamentList(docs) {
+            tournamentsContainer.innerHTML = '';
+            docs.forEach(doc => {
+                const data = doc.data();
+                const tournamentItem = document.createElement('div');
+                tournamentItem.className = "flex items-center space-x-2 p-2 bg-white rounded-md shadow-sm border border-gray-200";
+                tournamentItem.innerHTML = `
+                    <input type="checkbox" id="checkbox-${doc.id}" data-id="${doc.id}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md">
+                    <label for="checkbox-${doc.id}" class="flex-grow text-sm font-medium text-gray-700">${data.name}</label>
+                `;
+                tournamentsContainer.appendChild(tournamentItem);
             });
         }
 
-        addTournamentBtn.addEventListener('click', async () => {
-            const tournamentName = newTournamentNameInput.value.trim();
-            if (tournamentName === "") {
-                showMessage('大会名を入力してください。', 'red', managementMessageDiv);
+        newTournamentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const tournamentName = tournamentNameInput.value.trim();
+            if (!tournamentName) {
+                showMessage('大会名を入力してください。', 'red', messageDiv);
                 return;
             }
 
             try {
                 const tournamentsRef = collection(db, `artifacts/${appId}/public/data/tournaments`);
-                await addDoc(tournamentsRef, { name: tournamentName, createdAt: serverTimestamp() });
-                showMessage(`${tournamentName} を登録しました。`, 'green', managementMessageDiv);
-                newTournamentNameInput.value = '';
+                await addDoc(tournamentsRef, {
+                    name: tournamentName,
+                    createdAt: serverTimestamp(),
+                    registeredBy: userId
+                });
+                showMessage('新しい大会が登録されました！', 'green', messageDiv);
+                tournamentNameInput.value = '';
             } catch (e) {
-                console.error("大会の登録に失敗しました: ", e);
-                showMessage('大会の登録に失敗しました。', 'red', managementMessageDiv);
+                console.error("大会登録エラー: ", e);
+                showMessage('大会の登録に失敗しました。', 'red', messageDiv);
             }
         });
 
-        selectTournamentBtn.addEventListener('click', () => {
+        openTournamentButton.addEventListener('click', () => {
             const selectedTournamentId = tournamentSelect.value;
-            const selectedTournamentName = tournamentSelect.options[tournamentSelect.selectedIndex].text;
-            if (selectedTournamentId === "") {
-                showMessage('大会を選択してください。', 'red', managementMessageDiv);
-                return;
+            if (selectedTournamentId) {
+                const url = `match_record.html?tournamentId=${selectedTournamentId}`;
+                window.open(url, '_blank');
+            } else {
+                showMessage('大会を選択してください。', 'red', messageDiv);
             }
-            openMainDashboard(selectedTournamentId, selectedTournamentName);
+        });
+        
+        showTournamentsButton.addEventListener('click', () => {
+            tournamentListSection.classList.toggle('hidden');
         });
 
-        showAllTournamentsBtn.addEventListener('click', () => {
-            deletionSection.classList.toggle('hidden');
-        });
-
-        function openMainDashboard(tournamentId, tournamentName) {
-            currentTournamentId = tournamentId;
-            dashboardTitle.textContent = tournamentName + " | 本部ダッシュボード";
-            
-            tournamentManagementScreen.classList.add('hidden');
-            mainDashboardScreen.classList.remove('hidden');
-
-            setupMatchRecordsListener();
-        }
-
-        backToManagementBtn.addEventListener('click', () => {
-            currentTournamentId = null;
-            mainDashboardScreen.classList.add('hidden');
-            tournamentManagementScreen.classList.remove('hidden');
-        });
-
-        deleteSelectedTournamentsBtn.addEventListener('click', async () => {
-            const checkboxes = document.querySelectorAll('.delete-checkbox:checked');
-            const tournamentIdsToDelete = Array.from(checkboxes).map(cb => cb.dataset.id);
-
-            if (tournamentIdsToDelete.length === 0) {
-                showMessage('削除する大会を一つ以上選択してください。', 'red', managementMessageDiv);
-                return;
-            }
-
-            if (await showConfirmModal(`選択した ${tournamentIdsToDelete.length} 件の大会データを本当に削除しますか？`)) {
-                try {
-                    const batch = writeBatch(db);
-                    for (const tournamentId of tournamentIdsToDelete) {
-                        const tournamentRef = doc(db, `artifacts/${appId}/public/data/tournaments`, tournamentId);
-                        
-                        // サブコレクションを削除
-                        const playersRef = collection(tournamentRef, 'players');
-                        const matchesRef = collection(tournamentRef, 'matches');
-                        
-                        const playerDocs = await getDocs(playersRef);
-                        playerDocs.forEach(d => batch.delete(d.ref));
-                        
-                        const matchDocs = await getDocs(matchesRef);
-                        matchDocs.forEach(d => batch.delete(d.ref));
-                        
-                        // 大会ドキュメントを削除
-                        batch.delete(tournamentRef);
-                    }
-                    await batch.commit();
-                    showMessage(`${tournamentIdsToDelete.length}件の大会データを削除しました。`, 'green', managementMessageDiv);
-                } catch (e) {
-                    console.error("大会データの削除に失敗しました: ", e);
-                    showMessage('大会データの削除に失敗しました。', 'red', managementMessageDiv);
-                }
+        deleteTournamentsButton.addEventListener('click', () => {
+            const checkedBoxes = tournamentsContainer.querySelectorAll('input[type="checkbox"]:checked');
+            if (checkedBoxes.length > 0) {
+                deleteModal.style.display = 'flex';
+            } else {
+                showMessage('削除する大会を選択してください。', 'red', messageDiv);
             }
         });
 
-        // === メインダッシュボード機能 ===
+        cancelDeleteButton.addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+        });
 
-        // 選手CSVデータの取り込みとFirestoreへの保存
-        uploadCsvBtn.addEventListener('click', () => {
-            if (!userId) {
-                showMessage('認証が完了していません。', 'red', dashboardMessageDiv);
-                return;
-            }
-            if (!currentTournamentId) {
-                showMessage('大会が選択されていません。', 'red', dashboardMessageDiv);
-                return;
-            }
-            const file = csvFileInput.files[0];
-            if (!file) {
-                showMessage('CSVファイルを選択してください。', 'red', dashboardMessageDiv);
-                return;
-            }
+        confirmDeleteButton.addEventListener('click', async () => {
+            deleteModal.style.display = 'none';
+            const checkedBoxes = tournamentsContainer.querySelectorAll('input[type="checkbox"]:checked');
+            const tournamentIdsToDelete = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.id);
 
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const text = e.target.result;
-                const lines = text.split('\n');
+            try {
                 const batch = writeBatch(db);
-                const playersRef = collection(db, `artifacts/${appId}/public/data/tournaments/${currentTournamentId}/players`);
-                let successCount = 0;
-                let errorCount = 0;
-
-                lines.forEach(line => {
-                    const [playerName, school, rank] = line.trim().split(',');
-                    if (playerName && school && rank) {
-                        const playerDocRef = doc(playersRef, playerName);
-                        batch.set(playerDocRef, { name: playerName, school: school, rank: rank.trim() });
-                        successCount++;
-                    } else if (line.trim() !== '') {
-                        errorCount++;
-                    }
-                });
-
-                try {
-                    await batch.commit();
-                    showMessage(`${successCount}件の選手データを登録しました。`, 'green', dashboardMessageDiv);
-                } catch (e) {
-                    console.error("選手データの保存に失敗しました: ", e);
-                    showMessage(`データの保存に失敗しました。エラー件数: ${errorCount}`, 'red', dashboardMessageDiv);
+                for (const tournamentId of tournamentIdsToDelete) {
+                    const tournamentRef = doc(db, `artifacts/${appId}/public/data/tournaments`, tournamentId);
+                    
+                    // Delete subcollection 'matches'
+                    const matchesQuery = query(collection(db, `artifacts/${appId}/public/data/tournaments/${tournamentId}/matches`));
+                    const matchesSnapshot = await getDocs(matchesQuery);
+                    matchesSnapshot.forEach((matchDoc) => {
+                        batch.delete(matchDoc.ref);
+                    });
+                    
+                    // Delete main tournament document
+                    batch.delete(tournamentRef);
                 }
-            };
-            reader.readAsText(file);
-        });
-
-        // 試合記録のリアルタイムリスナー
-        function setupMatchRecordsListener() {
-            if (!userId || !currentTournamentId) return;
-            const matchesRef = collection(db, `artifacts/${appId}/public/data/tournaments/${currentTournamentId}/matches`);
-            onSnapshot(matchesRef, (snapshot) => {
-                allMatchRecords = [];
-                const venues = new Set();
-                const ranks = new Set();
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    allMatchRecords.push({ id: doc.id, ...data });
-                    if (data.venue) venues.add(data.venue);
-                    if (data.rank) ranks.add(data.rank);
-                });
-                
-                updateFilterOptions(venueFilter, Array.from(venues));
-                updateFilterOptions(rankFilter, Array.from(ranks));
-                
-                filterAndRenderMatches();
-            }, (error) => {
-                console.error("試合記録のリアルタイム更新エラー:", error);
-                matchRecordsList.innerHTML = `<p class="text-center text-red-500">エラーが発生しました: ${error.message}</p>`;
-            });
-        }
-
-        function updateFilterOptions(selectElement, options) {
-            const currentSelected = selectElement.value;
-            selectElement.innerHTML = '<option value="">すべて</option>';
-            options.sort().forEach(option => {
-                const opt = document.createElement('option');
-                opt.value = option;
-                opt.textContent = option;
-                selectElement.appendChild(opt);
-            });
-            selectElement.value = currentSelected;
-        }
-
-        searchBtn.addEventListener('click', filterAndRenderMatches);
-
-        function filterAndRenderMatches() {
-            const filteredRecords = allMatchRecords.filter(record => {
-                const venueMatch = !venueFilter.value || record.venue === venueFilter.value;
-                const rankMatch = !rankFilter.value || record.rank === rankFilter.value;
-                const playerMatch = !playerFilter.value || (record.player1.includes(playerFilter.value) || record.player2.includes(playerFilter.value));
-                const schoolMatch = !schoolFilter.value || (record.school1.includes(schoolFilter.value) || record.school2.includes(schoolFilter.value));
-                const semifinalMatch = !semifinalFilter.checked || (record.round === '準決勝' || record.round === '決勝');
-
-                return venueMatch && rankMatch && playerMatch && schoolMatch && semifinalMatch;
-            });
-            renderMatchRecords(filteredRecords);
-        }
-
-        function renderMatchRecords(records) {
-            matchRecordsList.innerHTML = '';
-            if (records.length === 0) {
-                matchRecordsList.innerHTML = `<p class="text-center text-gray-500">条件に一致する試合記録はありません。</p>`;
-                return;
-            }
-            
-            records.forEach(data => {
-                const matchCard = document.createElement('div');
-                matchCard.className = "bg-white p-4 rounded-lg shadow border border-gray-200 space-y-2";
-                matchCard.innerHTML = `
-                    <h3 class="font-bold text-lg">${data.venue} - 試合番号 ${data.matchNumber}</h3>
-                    <p class="text-sm text-gray-600"><strong>回戦:</strong> ${data.round} | <strong>階級:</strong> ${data.rank}</p>
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-red-600 font-semibold">${data.player1} (${data.school1})</span>
-                        <span class="text-gray-500">vs</span>
-                        <span class="text-gray-800 font-semibold">${data.player2} (${data.school2})</span>
-                    </div>
-                    <p class="text-xs text-gray-600">
-                        <strong>勝敗:</strong> ${data.player1Outcome} / ${data.player2Outcome}
-                        ${data.player1Technique || data.player2Technique ? ` (${data.player1Technique || data.player2Technique})` : ''}
-                    </p>
-                    <p class="text-xs text-gray-500"><strong>時間:</strong> ${data.matchTime}</p>
-                    <div class="flex justify-end space-x-2 mt-2">
-                        <button data-id="${data.id}" class="edit-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-3 rounded-lg transition duration-300">
-                            編集
-                        </button>
-                        <button data-id="${data.id}" class="delete-btn bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-3 rounded-lg transition duration-300">
-                            削除
-                        </button>
-                    </div>
-                `;
-                matchRecordsList.appendChild(matchCard);
-            });
-
-            document.querySelectorAll('.edit-btn').forEach(button => {
-                button.addEventListener('click', (e) => openEditModal(e.target.dataset.id));
-            });
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    if (await showConfirmModal('本当にこの記録を削除しますか？')) {
-                        deleteMatchRecord(e.target.dataset.id);
-                    }
-                });
-            });
-        }
-
-        exportPdfBtn.addEventListener('click', async () => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const recordsToExport = allMatchRecords.filter(record => {
-                const venueMatch = !venueFilter.value || record.venue === venueFilter.value;
-                const rankMatch = !rankFilter.value || record.rank === rankFilter.value;
-                const playerMatch = !playerFilter.value || (record.player1.includes(playerFilter.value) || record.player2.includes(playerFilter.value));
-                const schoolMatch = !schoolFilter.value || (record.school1.includes(schoolFilter.value) || record.school2.includes(schoolFilter.value));
-                const semifinalMatch = !semifinalFilter.checked || (record.round === '準決勝' || record.round === '決勝');
-
-                return venueMatch && rankMatch && playerMatch && schoolMatch && semifinalMatch;
-            });
-            
-            if (recordsToExport.length === 0) {
-                showMessage('PDF出力する記録がありません。', 'red', dashboardMessageDiv);
-                return;
-            }
-
-            const header = '大会本部 試合記録一覧';
-            const subHeader = `検索条件: 試合会場=${venueFilter.value || 'すべて'}, 階級=${rankFilter.value || 'すべて'}, 選手名=${playerFilter.value || 'すべて'}, 所属=${schoolFilter.value || 'すべて'}, 準決勝以上=${semifinalFilter.checked ? 'はい' : 'いいえ'}`;
-
-            doc.setFont('Helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.text(header, 105, 15, null, null, 'center');
-            doc.setFont('Helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.text(subHeader, 105, 20, null, null, 'center');
-
-            let yOffset = 30;
-            const margin = 10;
-            const pageHeight = doc.internal.pageSize.height;
-
-            const cards = recordsToExport.map(record => {
-                return `
-                    <div style="font-family: 'Inter', sans-serif; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px; background-color: white;">
-                        <h3 style="font-weight: bold; font-size: 18px;">${record.venue} - 試合番号 ${record.matchNumber}</h3>
-                        <p style="font-size: 12px; color: #4b5563;"><strong>回戦:</strong> ${record.round} | <strong>階級:</strong> ${record.rank}</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-top: 5px;">
-                            <span style="color: #dc2626; font-weight: 600;">${record.player1} (${record.school1})</span>
-                            <span style="color: #6b7280;">vs</span>
-                            <span style="color: #1f2937; font-weight: 600;">${record.player2} (${record.school2})</span>
-                        </div>
-                        <p style="font-size: 10px; color: #4b5563;">
-                            <strong>勝敗:</strong> ${record.player1Outcome} / ${record.player2Outcome}
-                            ${record.player1Technique || record.player2Technique ? ` (${record.player1Technique || record.player2Technique})` : ''}
-                        </p>
-                        <p style="font-size: 10px; color: #6b7280;"><strong>時間:</strong> ${record.matchTime}</p>
-                    </div>
-                `;
-            });
-            
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
-            tempDiv.innerHTML = cards.join('');
-            document.body.appendChild(tempDiv);
-            
-            for (const cardElement of tempDiv.children) {
-                const canvas = await html2canvas(cardElement, { scale: 2 });
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                if (yOffset + imgHeight > pageHeight - margin) {
-                    doc.addPage();
-                    yOffset = margin;
-                }
-                
-                doc.addImage(imgData, 'PNG', margin, yOffset, imgWidth, imgHeight);
-                yOffset += imgHeight + 5;
-            }
-            
-            tempDiv.remove();
-            doc.save('試合記録一覧.pdf');
-            showMessage('PDFを正常に生成しました。', 'green', dashboardMessageDiv);
-        });
-
-        /**
-         * Opens the edit modal and populates it with existing match data.
-         * @param {string} docId - The Firestore document ID of the match to edit.
-         */
-        async function openEditModal(docId) {
-            const docRef = doc(db, `artifacts/${appId}/public/data/tournaments/${currentTournamentId}/matches`, docId);
-            try {
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('editMatchId').value = docId;
-                    document.getElementById('editVenue').value = data.venue || '';
-                    document.getElementById('editMatchNumber').value = data.matchNumber || '';
-                    document.getElementById('editRound').value = data.round || '';
-                    document.getElementById('editRank').value = data.rank || '';
-                    document.getElementById('editPlayer1').value = data.player1 || '';
-                    document.getElementById('editSchool1').value = data.school1 || '';
-                    document.getElementById('editOutcome1').value = data.player1Outcome || '';
-                    document.getElementById('editTechnique1').value = data.player1Technique || '';
-                    document.getElementById('editPlayer2').value = data.player2 || '';
-                    document.getElementById('editSchool2').value = data.school2 || '';
-                    document.getElementById('editOutcome2').value = data.player2Outcome || '';
-                    document.getElementById('editTechnique2').value = data.player2Technique || '';
-                    document.getElementById('editMatchTime').value = data.matchTime || '';
-                    editModal.classList.remove('hidden');
-                } else {
-                    showMessage('編集する記録が見つかりません。', 'red', dashboardMessageDiv);
-                }
-            } catch (e) {
-                console.error("試合記録の取得エラー:", e);
-                showMessage('試合記録の取得中にエラーが発生しました。', 'red', dashboardMessageDiv);
-            }
-        }
-
-        /**
-         * Deletes a match record from Firestore.
-         * @param {string} docId - The Firestore document ID of the record to delete.
-         */
-        async function deleteMatchRecord(docId) {
-            if (!docId) return;
-            try {
-                const docRef = doc(db, `artifacts/${appId}/public/data/tournaments/${currentTournamentId}/matches`, docId);
-                await deleteDoc(docRef);
-                showMessage('試合記録を削除しました。', 'green', dashboardMessageDiv);
-            } catch (e) {
-                console.error("試合記録の削除エラー:", e);
-                showMessage('試合記録の削除に失敗しました。', 'red', dashboardMessageDiv);
-            }
-        }
-
-        // Event listeners for the modals
-        closeModalBtn.addEventListener('click', () => {
-            editModal.classList.add('hidden');
-        });
-
-        editForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const docId = document.getElementById('editMatchId').value;
-            if (!docId) return;
-
-            const updatedData = {
-                matchNumber: parseInt(document.getElementById('editMatchNumber').value, 10),
-                round: document.getElementById('editRound').value,
-                rank: document.getElementById('editRank').value,
-                player1: document.getElementById('editPlayer1').value,
-                school1: document.getElementById('editSchool1').value,
-                player1Outcome: document.getElementById('editOutcome1').value,
-                player1Technique: document.getElementById('editTechnique1').value,
-                player2: document.getElementById('editPlayer2').value,
-                school2: document.getElementById('editSchool2').value,
-                player2Outcome: document.getElementById('editOutcome2').value,
-                player2Technique: document.getElementById('editTechnique2').value,
-                matchTime: document.getElementById('editMatchTime').value,
-                updatedAt: serverTimestamp()
-            };
-
-            try {
-                const docRef = doc(db, `artifacts/${appId}/public/data/tournaments/${currentTournamentId}/matches`, docId);
-                await updateDoc(docRef, updatedData);
-                editModal.classList.add('hidden');
-                showMessage('試合記録を更新しました。', 'green', dashboardMessageDiv);
-            } catch (e) {
-                console.error("試合記録の更新エラー:", e);
-                showMessage('試合記録の更新に失敗しました。', 'red', dashboardMessageDiv);
+                await batch.commit();
+                showMessage('選択した大会を削除しました。', 'green', messageDiv);
+            } catch (error) {
+                console.error("大会の削除エラー:", error);
+                showMessage('大会の削除に失敗しました。', 'red', messageDiv);
             }
         });
     </script>
