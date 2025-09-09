@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>試合記録入力</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+
+    <!-- 大会選択画面 (初期表示) -->
+    <div id="tournamentSelectionScreen" class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800">試合記録入力システム</h1>
+        <div id="userIdDisplay" class="text-sm text-gray-500 text-center"></div>
+
+        <hr class="my-4">
+
+        <!-- 既存大会の選択 -->
+        <div class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
+            <h2 class="text-xl font-semibold text-gray-700">大会の選択</h2>
+            <div class="flex flex-col space-y-2">
+                <label for="tournamentSelect" class="block text-sm font-medium text-gray-700">大会を選択してください:</label>
+                <select id="tournamentSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    <option value="">大会を選択</option>
+                </select>
+                <button id="startRecordingBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    記録を開始
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 試合記録画面 -->
+    <div id="matchRecordingScreen" class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6 hidden">
+        <div class="flex items-center justify-between">
+            <h1 id="recordingTitle" class="text-2xl font-bold text-gray-800">試合記録</h1>
+            <button id="backToSelectionBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                大会選択に戻る
+            </button>
+        </div>
+        <p id="recordingMessage" class="text-sm font-medium text-center hidden"></p>
+        
+        <form id="matchForm" class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">回戦:</label>
+                    <input type="text" id="roundInput" placeholder="例: 準決勝" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">試合番号:</label>
+                    <input type="number" id="matchNumberInput" placeholder="例: 15" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">階級:</label>
+                <input type="text" id="rankInput" placeholder="例: 73kg級" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 選手（赤）セクション -->
+                <div class="p-4 bg-red-100 rounded-lg space-y-2">
+                    <h3 class="text-lg font-bold text-red-800">選手（赤）</h3>
+                    <div class="flex flex-col space-y-1">
+                        <label for="player1Input" class="block text-sm font-medium text-red-700">選手名:</label>
+                        <input type="text" id="player1Input" list="player1Datalist" placeholder="例: ヤマダタロウ" class="mt-1 block w-full rounded-md border-red-300 shadow-sm p-2 border">
+                        <datalist id="player1Datalist"></datalist>
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label for="school1Input" class="block text-sm font-medium text-red-700">所属（高校名）:</label>
+                        <input type="text" id="school1Input" placeholder="例: 〇〇高校" class="mt-1 block w-full rounded-md border-red-300 shadow-sm p-2 border" disabled>
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label for="outcome1Input" class="block text-sm font-medium text-red-700">勝敗:</label>
+                        <select id="outcome1Input" class="mt-1 block w-full rounded-md border-red-300 shadow-sm p-2 border">
+                            <option value="">選択してください</option>
+                            <option value="一本">一本</option>
+                            <option value="技あり">技あり</option>
+                            <option value="優勢勝ち">優勢勝ち</option>
+                            <option value="反則勝ち">反則勝ち</option>
+                            <option value="指導">指導</option>
+                            <option value="不戦勝">不戦勝</option>
+                            <option value="引き分け">引き分け</option>
+                            <option value="棄権">棄権</option>
+                            <option value="敗退">敗退</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label for="technique1Input" class="block text-sm font-medium text-red-700">決まり技:</label>
+                        <input type="text" id="technique1Input" placeholder="例: 大外刈り" class="mt-1 block w-full rounded-md border-red-300 shadow-sm p-2 border">
+                    </div>
+                </div>
+
+                <!-- 選手（白）セクション -->
+                <div class="p-4 bg-gray-100 rounded-lg space-y-2">
+                    <h3 class="text-lg font-bold text-gray-800">選手（白）</h3>
+                    <div class="flex flex-col space-y-1">
+                        <label for="player2Input" class="block text-sm font-medium text-gray-700">選手名:</label>
+                        <input type="text" id="player2Input" list="player2Datalist" placeholder="例: スズキハナコ" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <datalist id="player2Datalist"></datalist>
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label for="school2Input" class="block text-sm font-medium text-gray-700">所属（高校名）:</label>
+                        <input type="text" id="school2Input" placeholder="例: 〇〇高校" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" disabled>
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label for="outcome2Input" class="block text-sm font-medium text-gray-700">勝敗:</label>
+                        <select id="outcome2Input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                            <option value="">選択してください</option>
+                            <option value="一本">一本</option>
+                            <option value="技あり">技あり</option>
+                            <option value="優勢勝ち">優勢勝ち</option>
+                            <option value="反則勝ち">反則勝ち</option>
+                            <option value="指導">指導</option>
+                            <option value="不戦勝">不戦勝</option>
+                            <option value="引き分け">引き分け</option>
+                            <option value="棄権">棄権</option>
+                            <option value="敗退">敗退</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label for="technique2Input" class="block text-sm font-medium text-gray-700">決まり技:</label>
+                        <input type="text" id="technique2Input" placeholder="例: 内股" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">試合時間 (分:秒):</label>
+                <input type="text" id="matchTimeInput" placeholder="例: 4:00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+
+            <div class="flex justify-between space-x-2">
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    記録を送信
+                </button>
+                <button type="button" id="resetFormBtn" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    リセット
+                </button>
+            </div>
+        </form>
+        
+        <!-- 最新試合のリアルタイム表示セクション -->
+        <div class="mt-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">最新の試合記録</h2>
+            <div id="recentMatchesList" class="space-y-2">
+                <p class="text-gray-500 text-center">試合記録がここに表示されます...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- カスタムメッセージダイアログ -->
+    <div id="messageModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-80 shadow-lg rounded-md bg-white text-center">
+            <h3 class="text-lg font-bold mb-4">メッセージ</h3>
+            <p id="modalMessage" class="text-gray-700 mb-6"></p>
+            <button id="closeMessageModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">閉じる</button>
+        </div>
+    </div>
+    
+    <!-- Firebase CDN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDocs, collection, serverTimestamp, onSnapshot, addDoc, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        setLogLevel('debug');
+
+        // Firestoreのグローバル変数
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // UIエレメントの取得
+        const tournamentSelectionScreen = document.getElementById('tournamentSelectionScreen');
+        const matchRecordingScreen = document.getElementById('matchRecordingScreen');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const tournamentSelect = document.getElementById('tournamentSelect');
+        const startRecordingBtn = document.getElementById('startRecordingBtn');
+        const backToSelectionBtn = document.getElementById('backToSelectionBtn');
+        const recordingTitle = document.getElementById('recordingTitle');
+        const recordingMessageDiv = document.getElementById('recordingMessage');
+        const matchForm = document.getElementById('matchForm');
+        const player1Input = document.getElementById('player1Input');
+        const player2Input = document.getElementById('player2Input');
+        const player1Datalist = document.getElementById('player1Datalist');
+        const player2Datalist = document.getElementById('player2Datalist');
+        const school1Input = document.getElementById('school1Input');
+        const school2Input = document.getElementById('school2Input');
+        const resetFormBtn = document.getElementById('resetFormBtn');
+        const messageModal = document.getElementById('messageModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const closeMessageModalBtn = document.getElementById('closeMessageModalBtn');
+        const recentMatchesList = document.getElementById('recentMatchesList');
+
+        let userId = null;
+        let currentTournamentId = null;
+        let currentVenue = "未指定"; // 会場名を固定値に設定
+        let allPlayers = [];
+
+        // Firebase認証処理
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = `ユーザーID: ${userId}`;
+                console.log("Firebaseに認証されました。ユーザーID:", userId);
+                setupTournamentListener();
+            } else {
+                console.log("Firebase認証中...");
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Firebase認証エラー:", error);
+                }
+            }
+        });
+
+        // 大会選択画面のリスナー
+        function setupTournamentListener() {
+            const tournamentsRef = collection(db, `artifacts/${appId}/public/data/tournaments`);
+            onSnapshot(tournamentsRef, (snapshot) => {
+                tournamentSelect.innerHTML = '<option value="">大会を選択</option>';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = data.name;
+                    tournamentSelect.appendChild(option);
+                });
+            }, (error) => {
+                console.error("大会一覧の取得エラー:", error);
+                showMessage('大会一覧の取得中にエラーが発生しました。', 'red');
+            });
+        }
+
+        startRecordingBtn.addEventListener('click', async () => {
+            const selectedTournamentId = tournamentSelect.value;
+            if (selectedTournamentId === "") {
+                showMessage('大会を選択してください。', 'red');
+                return;
+            }
+            currentTournamentId = selectedTournamentId;
+            recordingTitle.textContent = `${tournamentSelect.options[tournamentSelect.selectedIndex].text} - ${currentVenue}`;
+
+            // 選手データを取得
+            await fetchPlayers(currentTournamentId);
+
+            tournamentSelectionScreen.classList.add('hidden');
+            matchRecordingScreen.classList.remove('hidden');
+
+            // 試合記録のリアルタイム表示リスナーを設定
+            setupMatchListener(currentTournamentId);
+        });
+
+        backToSelectionBtn.addEventListener('click', () => {
+            matchRecordingScreen.classList.add('hidden');
+            tournamentSelectionScreen.classList.remove('hidden');
+            // フォームをリセット
+            matchForm.reset();
+            player1Datalist.innerHTML = '';
+            player2Datalist.innerHTML = '';
+        });
+
+        // 選手データの取得とオートコンプリート
+        async function fetchPlayers(tournamentId) {
+            const playersRef = collection(db, `artifacts/${appId}/public/data/tournaments/${tournamentId}/players`);
+            try {
+                const querySnapshot = await getDocs(playersRef);
+                allPlayers = [];
+                player1Datalist.innerHTML = '';
+                player2Datalist.innerHTML = '';
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    allPlayers.push(data);
+                    const option1 = document.createElement('option');
+                    option1.value = data.name;
+                    player1Datalist.appendChild(option1);
+                    const option2 = document.createElement('option');
+                    option2.value = data.name;
+                    player2Datalist.appendChild(option2);
+                });
+            } catch (e) {
+                console.error("選手データの取得に失敗しました: ", e);
+                showMessage('選手データの取得に失敗しました。', 'red');
+            }
+        }
+
+        // 選手名入力時に所属を自動入力
+        player1Input.addEventListener('input', () => {
+            const player = allPlayers.find(p => p.name === player1Input.value);
+            school1Input.value = player ? player.school : '';
+        });
+
+        player2Input.addEventListener('input', () => {
+            const player = allPlayers.find(p => p.name === player2Input.value);
+            school2Input.value = player ? player.school : '';
+        });
+
+        // フォーム送信処理
+        matchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const matchData = {
+                venue: currentVenue,
+                round: document.getElementById('roundInput').value,
+                matchNumber: document.getElementById('matchNumberInput').value,
+                rank: document.getElementById('rankInput').value,
+                player1: player1Input.value,
+                school1: school1Input.value,
+                player1Outcome: document.getElementById('outcome1Input').value,
+                player1Technique: document.getElementById('technique1Input').value,
+                player2: player2Input.value,
+                school2: school2Input.value,
+                player2Outcome: document.getElementById('outcome2Input').value,
+                player2Technique: document.getElementById('technique2Input').value,
+                matchTime: document.getElementById('matchTimeInput').value,
+                timestamp: serverTimestamp()
+            };
+
+            if (!matchData.player1 || !matchData.player2) {
+                showMessage('選手名を入力してください。', 'red');
+                return;
+            }
+
+            try {
+                const matchesRef = collection(db, `artifacts/${appId}/public/data/tournaments/${currentTournamentId}/matches`);
+                await addDoc(matchesRef, matchData);
+                showMessage('試合記録を正常に送信しました。', 'green');
+                // フォームをリセット
+                matchForm.reset();
+            } catch (e) {
+                console.error("試合記録の送信エラー: ", e);
+                showMessage('試合記録の送信に失敗しました。', 'red');
+            }
+        });
+
+        // フォームリセットボタン
+        resetFormBtn.addEventListener('click', () => {
+            matchForm.reset();
+            school1Input.value = '';
+            school2Input.value = '';
+        });
+
+        // 最新の試合記録をリアルタイムで表示するリスナー
+        function setupMatchListener(tournamentId) {
+            const matchesRef = collection(db, `artifacts/${appId}/public/data/tournaments/${tournamentId}/matches`);
+            const q = query(matchesRef, orderBy('timestamp', 'desc'), limit(10));
+
+            onSnapshot(q, (snapshot) => {
+                recentMatchesList.innerHTML = '';
+                if (snapshot.empty) {
+                    recentMatchesList.innerHTML = '<p class="text-gray-500 text-center">まだ試合記録がありません。</p>';
+                    return;
+                }
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const matchItem = document.createElement('div');
+                    matchItem.classList.add('p-4', 'bg-white', 'rounded-lg', 'shadow', 'mb-2', 'space-y-1', 'border', 'border-gray-200');
+                    matchItem.innerHTML = `
+                        <p class="text-xs text-gray-400">${data.round} 試合No: ${data.matchNumber}</p>
+                        <p class="font-bold text-gray-800">${data.player1} <span class="text-red-600">${data.player1Outcome}</span> - <span class="text-gray-600">${data.player2Outcome}</span> ${data.player2}</p>
+                        <p class="text-sm text-gray-600">所属: ${data.school1} vs ${data.school2}</p>
+                        <p class="text-sm text-gray-500">決まり技: ${data.player1Technique || 'なし'} / ${data.player2Technique || 'なし'}</p>
+                        <p class="text-sm text-gray-500">時間: ${data.matchTime || 'N/A'}</p>
+                    `;
+                    recentMatchesList.appendChild(matchItem);
+                });
+            }, (error) => {
+                console.error("試合記録の取得エラー:", error);
+                showMessage('最新の試合記録の取得中にエラーが発生しました。', 'red');
+            });
+        }
+
+        // カスタムメッセージ表示関数
+        function showMessage(msg) {
+            modalMessage.textContent = msg;
+            messageModal.classList.remove('hidden');
+        }
+
+        closeMessageModalBtn.addEventListener('click', () => {
+            messageModal.classList.add('hidden');
+        });
+
+    </script>
+</body>
+</html>
