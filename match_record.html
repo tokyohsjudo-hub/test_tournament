@@ -11,7 +11,7 @@
 </head>
 <body class="bg-gray-100 p-4">
     <div id="recordScreen" class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
-        <div class="flex items-center justify-end">
+        <div class="flex items-center justify-between">
             <h1 class="text-3xl font-bold text-gray-800">試合記録入力システム</h1>
         </div>
         <div id="userIdDisplay" class="text-sm text-gray-500 text-center"></div>
@@ -93,7 +93,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, getDoc, serverTimestamp, onSnapshot, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, getDoc, serverTimestamp, onSnapshot, query, where, getDocs, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         setLogLevel('debug');
@@ -225,3 +225,4 @@
     </script>
 </body>
 </html>
+
