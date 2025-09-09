@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>試合記録入力システム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div id="recordScreen" class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-6 space-y-6">
+        <div class="flex items-center justify-end">
+            <h1 class="text-3xl font-bold text-gray-800">試合記録入力システム</h1>
+        </div>
+        <div id="userIdDisplay" class="text-sm text-gray-500 text-center"></div>
+        <p id="message" class="text-center font-medium p-2 rounded-lg hidden"></p>
+
+        <hr class="my-4">
+
+        <!-- 大会選択セクション -->
+        <div class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner">
+            <h2 class="text-xl font-semibold text-gray-700">大会の選択</h2>
+            <div class="flex flex-col space-y-2">
+                <label for="tournamentSelect" class="block text-sm font-medium text-gray-700">大会を選択してください:</label>
+                <select id="tournamentSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    <option value="">大会を選択</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 試合記録入力フォーム -->
+        <div id="matchFormSection" class="space-y-4 p-4 bg-gray-50 rounded-lg shadow-inner hidden">
+            <h2 class="text-xl font-semibold text-gray-700">試合記録の入力</h2>
+            <form id="matchForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">試合会場:</label>
+                    <input type="text" id="venue" placeholder="例: Aコート" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">試合番号:</label>
+                    <input type="number" id="matchNumber" placeholder="例: 101" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">回戦:</label>
+                    <input type="text" id="round" placeholder="例: 1回戦" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">階級:</label>
+                    <input type="text" id="rank" placeholder="例: 73kg級" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-2 bg-red-50 rounded-lg space-y-2">
+                        <label class="block text-sm font-bold text-gray-700">選手（赤）</label>
+                        <input type="text" id="player1Name" placeholder="選手名" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <input type="text" id="player1School" placeholder="所属" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <select id="player1Outcome" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                            <option value="">勝敗を選択</option>
+                            <option value="一本勝ち">一本勝ち</option>
+                            <option value="技あり">技あり</option>
+                            <option value="優勢勝ち">優勢勝ち</option>
+                            <option value="反則負け">反則負け</option>
+                        </select>
+                        <input type="text" id="player1Technique" placeholder="決まり技" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                    <div class="p-2 bg-white rounded-lg space-y-2">
+                        <label class="block text-sm font-bold text-gray-700">選手（白）</label>
+                        <input type="text" id="player2Name" placeholder="選手名" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <input type="text" id="player2School" placeholder="所属" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        <select id="player2Outcome" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                            <option value="">勝敗を選択</option>
+                            <option value="一本勝ち">一本勝ち</option>
+                            <option value="技あり">技あり</option>
+                            <option value="優勢勝ち">優勢勝ち</option>
+                            <option value="反則負け">反則負け</option>
+                        </select>
+                        <input type="text" id="player2Technique" placeholder="決まり技" class="w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">試合時間:</label>
+                    <input type="text" id="matchTime" placeholder="例: 4:00" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    記録を保存
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Firebase CDN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, getDoc, serverTimestamp, onSnapshot, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        setLogLevel('debug');
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const recordScreen = document.getElementById('recordScreen');
+        const tournamentSelect = document.getElementById('tournamentSelect');
+        const matchFormSection = document.getElementById('matchFormSection');
+        const matchForm = document.getElementById('matchForm');
+        const messageDiv = document.getElementById('message');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        
+        let userId = null;
+        let currentTournamentId = null;
+
+        /**
+         * Utility function to display a temporary message.
+         * @param {string} message - The message to display.
+         * @param {string} color - The color theme ('green', 'red').
+         * @param {HTMLElement} element - The HTML element to display the message in.
+         */
+        function showMessage(message, color, element) {
+            element.textContent = message;
+            element.className = `text-sm font-medium text-center p-2 rounded-lg mt-2 bg-${color}-100 text-${color}-800`;
+            element.classList.remove('hidden');
+            setTimeout(() => {
+                element.classList.add('hidden');
+            }, 3000);
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = `ユーザーID: ${userId}`;
+                console.log("Firebaseに認証されました。ユーザーID:", userId);
+                setupTournamentListener();
+            } else {
+                console.log("Firebase認証中...");
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Firebase認証エラー:", error);
+                }
+            }
+        });
+
+        function setupTournamentListener() {
+            if (!userId) {
+                console.log("ユーザーIDがまだありません。リトライします。");
+                setTimeout(setupTournamentListener, 1000);
+                return;
+            }
+            const tournamentsRef = collection(db, `artifacts/${appId}/public/data/tournaments`);
+            onSnapshot(tournamentsRef, (snapshot) => {
+                tournamentSelect.innerHTML = '<option value="">大会を選択</option>';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = data.name;
+                    tournamentSelect.appendChild(option);
+                });
+            }, (error) => {
+                console.error("大会一覧のリアルタイム更新エラー:", error);
+                showMessage('大会一覧の取得中にエラーが発生しました。', 'red', messageDiv);
+            });
+        }
+
+        tournamentSelect.addEventListener('change', (e) => {
+            currentTournamentId = e.target.value;
+            if (currentTournamentId) {
+                matchFormSection.classList.remove('hidden');
+                console.log("大会が選択されました:", currentTournamentId);
+            } else {
+                matchFormSection.classList.add('hidden');
+            }
+        });
+
+        matchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentTournamentId) {
+                showMessage('大会を選択してください。', 'red', messageDiv);
+                return;
+            }
+
+            const matchData = {
+                venue: document.getElementById('venue').value,
+                matchNumber: parseInt(document.getElementById('matchNumber').value, 10),
+                round: document.getElementById('round').value,
+                rank: document.getElementById('rank').value,
+                player1: document.getElementById('player1Name').value,
+                school1: document.getElementById('player1School').value,
+                player1Outcome: document.getElementById('player1Outcome').value,
+                player1Technique: document.getElementById('player1Technique').value,
+                player2: document.getElementById('player2Name').value,
+                school2: document.getElementById('player2School').value,
+                player2Outcome: document.getElementById('player2Outcome').value,
+                player2Technique: document.getElementById('player2Technique').value,
+                matchTime: document.getElementById('matchTime').value,
+                createdAt: serverTimestamp()
+            };
+
+            if (Object.values(matchData).some(value => value === '' || value === null || (typeof value === 'number' && isNaN(value)))) {
+                showMessage('すべての項目を入力してください。', 'red', messageDiv);
+                return;
+            }
+
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/tournaments/${currentTournamentId}/matches`, `match_${matchData.matchNumber}`);
+                await setDoc(docRef, matchData);
+                showMessage('試合記録を保存しました。', 'green', messageDiv);
+                matchForm.reset();
+            } catch (e) {
+                console.error("記録の保存エラー: ", e);
+                showMessage('記録の保存に失敗しました。', 'red', messageDiv);
+            }
+        });
+    </script>
+</body>
+</html>
