@@ -216,8 +216,8 @@
         openTournamentButton.addEventListener('click', () => {
             const selectedTournamentId = tournamentSelect.value;
             if (selectedTournamentId) {
-                const url = `match_record.html?tournamentId=${selectedTournamentId}`;
-                window.open(url, '_blank');
+                // 同じウィンドウ内でページを移動するように変更
+                window.location.href = `match_record.html?tournamentId=${selectedTournamentId}`;
             } else {
                 showMessage('大会を選択してください。', 'red', messageDiv);
             }
@@ -270,3 +270,4 @@
     </script>
 </body>
 </html>
+
